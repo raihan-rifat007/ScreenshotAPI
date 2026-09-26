@@ -1,0 +1,26 @@
+{
+  "name": "screenshot-api",
+  "version": "1.0.0",
+  "description": "Self-hosted API for capturing webpage screenshots and PDFs",
+  "main": "src/app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "nanoid": "^3.3.7",
+    "pino": "^9.4.0",
+    "pino-http": "^10.3.0",
+    "playwright": "1.48.0",
+    "sharp": "^0.33.5"
+  }
+}

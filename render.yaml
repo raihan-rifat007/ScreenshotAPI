@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: screenshot-api
+    env: docker
+    plan: starter
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: BROWSER_MAX_CONCURRENCY
+        value: 3
+      - key: ALLOW_PRIVATE_URLS
+        value: false

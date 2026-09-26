@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Self-hosted API for capturing webpage screenshots and PDFs.">
+<title>Screenshot API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='2' y='2' width='20' height='20' fill='%230A0A0A'/><rect x='6' y='6' width='12' height='12' fill='none' stroke='%23FF4B2B' stroke-width='2'/></svg>">
+</head>
+<body>
+
+<header class="bar">
+  <div class="mark">
+    <span class="mark-frame"></span>
+    <span class="mark-name">Screenshot API</span>
+  </div>
+  <nav class="bar-nav">
+    <button id="theme-btn" class="ghost-btn" aria-label="Toggle theme">
+      <svg id="theme-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <a class="ghost-btn" href="#reference">API reference</a>
+  </nav>
+</header>
+
+<main>
+  <section class="console">
+    <form id="capture-form" class="console-frame">
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner bl"></span>
+      <span class="corner br"></span>
+
+      <div class="urlbar">
+        <span class="urlbar-dot" id="status-dot"></span>
+        <input id="url-input" type="text" placeholder="https://example.com" autocomplete="off" required>
+        <button type="submit" id="capture-btn">Capture</button>
+      </div>
+
+      <div class="options-row">
+        <label class="opt">
+          <span>Device</span>
+          <select id="opt-device">
+            <option value="">Custom</option>
+          </select>
+        </label>
+        <label class="opt opt-dims">
+          <span>Width</span>
+          <input type="number" id="opt-width" value="1280" min="200" max="3840">
+        </label>
+        <label class="opt opt-dims">
+          <span>Height</span>
+          <input type="number" id="opt-height" value="800" min="200" max="2160">
+        </label>
+        <label class="opt">
+          <span>Format</span>
+          <select id="opt-format">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+            <option value="webp">WebP</option>
+          </select>
+        </label>
+        <label class="opt">
+          <span>Wait until</span>
+          <select id="opt-wait">
+            <option value="load">Load</option>
+            <option value="domcontentloaded">DOM ready</option>
+            <option value="networkidle">Network idle</option>
+          </select>
+        </label>
+        <label class="opt opt-dims">
+          <span>Delay (ms)</span>
+          <input type="number" id="opt-delay" value="0" min="0" max="10000" step="250">
+        </label>
+        <label class="opt-toggle">
+          <input type="checkbox" id="opt-fullpage">
+          <span>Full page</span>
+        </label>
+        <label class="opt-toggle">
+          <input type="checkbox" id="opt-darkmode">
+          <span>Dark mode</span>
+        </label>
+        <label class="opt-toggle">
+          <input type="checkbox" id="opt-blockads" checked>
+          <span>Block ads</span>
+        </label>
+      </div>
+
+      <p class="diag-line">
+        Getting a black or corrupted result? <a href="/api/health?selftest=true" target="_blank" rel="noopener">Run a render self-test</a> — it renders a page with no external network involved, isolating whether the browser itself is healthy.
+      </p>
+
+      <div class="result-area" id="result-area">
+        <div class="result-empty" id="result-empty">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+          <p>Paste a URL and capture to see it here</p>
+        </div>
+        <img id="result-img" class="result-img hidden" alt="">
+        <a id="result-pdf" class="result-pdf hidden" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Open generated PDF</span>
+        </a>
+      </div>
+
+      <div class="readout hidden" id="readout">
+        <div class="readout-item"><span class="readout-label">Dimensions</span><span class="readout-value" id="rd-dims">—</span></div>
+        <div class="readout-item"><span class="readout-label">Format</span><span class="readout-value" id="rd-format">—</span></div>
+        <div class="readout-item"><span class="readout-label">Size</span><span class="readout-value" id="rd-size">—</span></div>
+        <div class="readout-item"><span class="readout-label">Time</span><span class="readout-value" id="rd-time">—</span></div>
+        <div class="readout-actions">
+          <a id="dl-btn" class="text-btn" download>Download</a>
+          <button type="button" id="copy-btn" class="text-btn">Copy image URL</button>
+          <button type="button" id="pdf-btn" class="text-btn">Generate PDF instead</button>
+        </div>
+      </div>
+
+      <p class="error-line hidden" id="error-line"></p>
+    </form>
+  </section>
+
+  <section class="manifest">
+    <div class="manifest-row">
+      <h3>Full-page capture</h3>
+      <p>Renders the entire scrollable page, not just the first viewport.</p>
+    </div>
+    <div class="manifest-row">
+      <h3>Device presets</h3>
+      <p>iPhone, Pixel, Galaxy, iPad and desktop viewports with correct scale factors.</p>
+    </div>
+    <div class="manifest-row">
+      <h3>Dark-mode rendering</h3>
+      <p>Emulates <code>prefers-color-scheme: dark</code> before capture.</p>
+    </div>
+    <div class="manifest-row">
+      <h3>Ad and tracker blocking</h3>
+      <p>Strips known ad networks and analytics scripts for a clean shot.</p>
+    </div>
+    <div class="manifest-row">
+      <h3>Element capture</h3>
+      <p>Pass a CSS selector to screenshot a single element instead of the page.</p>
+    </div>
+    <div class="manifest-row">
+      <h3>Webpage to PDF</h3>
+      <p>Same rendering pipeline, paginated and exported as a PDF.</p>
+    </div>
+  </section>
+
+  <section class="reference" id="reference">
+    <div class="reference-panel">
+      <div class="reference-head">
+        <span>GET /api/screenshot</span>
+        <button type="button" id="copy-curl" class="text-btn">Copy curl</button>
+      </div>
+      <pre id="curl-block"></pre>
+    </div>
+    <table class="params-table">
+      <tbody>
+        <tr><td>url</td><td>required</td><td>Page to capture</td></tr>
+        <tr><td>device</td><td>string</td><td>Preset id, overrides width/height</td></tr>
+        <tr><td>width / height</td><td>number</td><td>Viewport size in pixels</td></tr>
+        <tr><td>fullPage</td><td>true / false</td><td>Capture full scroll height</td></tr>
+        <tr><td>format</td><td>png / jpeg / webp</td><td>Output image format</td></tr>
+        <tr><td>darkMode</td><td>true / false</td><td>Emulate dark color scheme</td></tr>
+        <tr><td>blockAds</td><td>true / false</td><td>Strip ads and trackers, default true</td></tr>
+        <tr><td>selector</td><td>string</td><td>Capture one element by CSS selector</td></tr>
+        <tr><td>delay</td><td>ms</td><td>Wait after load before capturing</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>Self-hosted · no request logs stored</span>
+  <span id="rate-note">30 requests / min</span>
+</footer>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
